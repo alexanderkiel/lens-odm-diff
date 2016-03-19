@@ -24,7 +24,13 @@
   (testing "equal values lead to no updates"
     (is (nil? (diff-item-data
                 {"I1" {:data-type :string :value "1"}}
-                {"I1" {:data-type :string :value "1"}})))))
+                {"I1" {:data-type :string :value "1"}}))))
+
+  (testing "differing value is updated"
+    (is (= {"I1" {:tx-type :update :data-type :string :value "1"}}
+           (diff-item-data
+             {"I1" {:data-type :string :value "0"}}
+             {"I1" {:data-type :string :value "1"}})))))
 
 (def date-time-generator (gen/return (date-time 2016 3 18 14 41)))
 

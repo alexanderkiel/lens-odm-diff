@@ -1,8 +1,6 @@
 (ns lens-odm-diff.core
   (:use plumbing.core)
   (:require [clj-time.core :refer [now]]
-            [clojure.data :refer [diff]]
-            [clojure.data.zip.xml :refer [xml-> xml1-> attr text]]
             [lens-odm-parser.core :refer [Item ItemData
                                           ItemGroup ItemGroupData
                                           Form FormData
