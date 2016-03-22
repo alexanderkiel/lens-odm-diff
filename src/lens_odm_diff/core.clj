@@ -8,7 +8,8 @@
                                           Subject SubjectData
                                           ClinicalDatum ClinicalData
                                           SnapshotODMFile
-                                          TransactionalODMFile]]
+                                          TransactionalODMFile
+                                          OID]]
             [schema.core :as s]))
 
 (s/defn diff-item-data :- (s/maybe ItemData)
@@ -25,7 +26,7 @@
             (if-let [old-item (get old k)]
               (if (= old-item new-item)
                 r
-                (assoc r k (assoc new-item :tx-type :update)))
+                (assoc r k new-item))
               (assoc r k (assoc new-item :tx-type :insert))))
           r new)))
 
@@ -44,7 +45,7 @@
           (s/fn [r k {new-items :items :as new-item-group} :- ItemGroup]
             (if-let [{old-items :items} (get old k)]
               (if-let [items (diff-item-data old-items new-items)]
-                (assoc r k {:tx-type :update :items items})
+                (assoc r k {:items items})
                 r)
               (assoc r k (assoc new-item-group :tx-type :insert))))
           r new)))
@@ -56,7 +57,7 @@
           (s/fn [r k {new-item-groups :item-groups :as new-form} :- Form]
             (if-let [{old-item-groups :item-groups} (get old k)]
               (if-let [item-groups (diff-item-group-data old-item-groups new-item-groups)]
-                (assoc r k {:tx-type :update :item-groups item-groups})
+                (assoc r k {:item-groups item-groups})
                 r)
               (assoc r k (assoc new-form :tx-type :insert))))
           r new)))
@@ -68,7 +69,7 @@
           (s/fn [r k {new-forms :forms :as new-study-event} :- StudyEvent]
             (if-let [{old-forms :forms} (get old k)]
               (if-let [forms (diff-form-data old-forms new-forms)]
-                (assoc r k {:tx-type :update :forms forms})
+                (assoc r k {:forms forms})
                 r)
               (assoc r k (assoc new-study-event :tx-type :insert))))
           r new)))
@@ -99,9 +100,9 @@
 (s/defn diff-snapshots :- TransactionalODMFile
   "Compares two snapshot ODM files and returns a transactional ODM file which
   can be used to update a data store based on old."
-  [old :- SnapshotODMFile new :- SnapshotODMFile]
+  [old :- SnapshotODMFile new :- SnapshotODMFile file-oid :- OID]
   (-> {:file-type :transactional
-       :file-oid "x"
+       :file-oid file-oid
        :creation-date-time (now)}
       (assoc-when :clinical-data (diff-clinical-data (:clinical-data old)
                                                      (:clinical-data new)))))

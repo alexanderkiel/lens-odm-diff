@@ -27,7 +27,7 @@
                 {"I1" {:data-type :string :value "1"}}))))
 
   (testing "differing value is updated"
-    (is (= {"I1" {:tx-type :update :data-type :string :value "1"}}
+    (is (= {"I1" {:data-type :string :value "1"}}
            (diff-item-data
              {"I1" {:data-type :string :value "0"}}
              {"I1" {:data-type :string :value "1"}})))))
