@@ -1,5 +1,7 @@
 # Lens ODM Diff
 
+[![Build Status](https://travis-ci.org/alexanderkiel/lens-odm-diff.svg?branch=master)](https://travis-ci.org/alexanderkiel/lens-odm-diff)
+
 Lens ODM Diff is a library which diffs two snapshot [CDISC ODM][1] files and returns a transactional ODM file which can be used to update a data store based on the first ODM file.
 
 ## Rationale
