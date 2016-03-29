@@ -1,4 +1,4 @@
-(defproject org.clojars.akiel/lens-odm-diff "0.1-SNAPSHOT"
+(defproject org.clojars.akiel/lens-odm-diff "0.1"
   :description "Diffs ODM XML files."
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
