@@ -99,7 +99,7 @@
 
 (s/defn diff-snapshots :- TransactionalODMFile
   "Compares two snapshot ODM files and returns a transactional ODM file which
-  can be used to update a data store based on old."
+  can be used to update a data store based on previous state."
   [old :- SnapshotODMFile new :- SnapshotODMFile file-oid :- OID]
   (-> {:file-type :transactional
        :file-oid file-oid
