@@ -16,18 +16,18 @@
   [old :- (s/maybe ItemData) new :- (s/maybe ItemData)]
   (as-> nil r
         (reduce-kv
-          (s/fn [r k old-item :- Item]
-            (if (get new k)
+          (s/fn [r item-oid old-item :- Item]
+            (if (get new item-oid)
               r
-              (assoc r k (assoc old-item :tx-type :remove))))
+              (assoc r item-oid (assoc old-item :tx-type :remove))))
           r old)
         (reduce-kv
-          (s/fn [r k new-item :- Item]
-            (if-let [old-item (get old k)]
+          (s/fn [r item-oid new-item :- Item]
+            (if-let [old-item (get old item-oid)]
               (if (= old-item new-item)
                 r
-                (assoc r k new-item))
-              (assoc r k (assoc new-item :tx-type :insert))))
+                (assoc r item-oid new-item))
+              (assoc r item-oid (assoc new-item :tx-type :insert))))
           r new)))
 
 (defn- remove-dangling
@@ -44,59 +44,59 @@
   [old :- (s/maybe ItemGroupData) new :- (s/maybe ItemGroupData)]
   (as-> (remove-dangling old new) r
         (reduce-kv
-          (s/fn [r k {new-items :items :as new-item-group} :- ItemGroup]
-            (if-let [{old-items :items} (get old k)]
+          (s/fn [r item-group-oid {new-items :items :as new-item-group} :- ItemGroup]
+            (if-let [{old-items :items} (get old item-group-oid)]
               (if-let [items (diff-item-data old-items new-items)]
-                (assoc r k {:items items})
+                (assoc r item-group-oid {:items items})
                 r)
-              (assoc r k (assoc new-item-group :tx-type :insert))))
+              (assoc r item-group-oid (assoc new-item-group :tx-type :insert))))
           r new)))
 
 (s/defn diff-form-data :- (s/maybe FormData)
   [old :- (s/maybe FormData) new :- (s/maybe FormData)]
   (as-> (remove-dangling old new) r
         (reduce-kv
-          (s/fn [r k {new-item-groups :item-groups :as new-form} :- Form]
-            (if-let [{old-item-groups :item-groups} (get old k)]
+          (s/fn [r form-oid {new-item-groups :item-groups :as new-form} :- Form]
+            (if-let [{old-item-groups :item-groups} (get old form-oid)]
               (if-let [item-groups (diff-item-group-data old-item-groups new-item-groups)]
-                (assoc r k {:item-groups item-groups})
+                (assoc r form-oid {:item-groups item-groups})
                 r)
-              (assoc r k (assoc new-form :tx-type :insert))))
+              (assoc r form-oid (assoc new-form :tx-type :insert))))
           r new)))
 
 (s/defn diff-study-event-data :- (s/maybe StudyEventData)
   [old :- (s/maybe StudyEventData) new :- (s/maybe StudyEventData)]
   (as-> (remove-dangling old new) r
         (reduce-kv
-          (s/fn [r k {new-forms :forms :as new-study-event} :- StudyEvent]
-            (if-let [{old-forms :forms} (get old k)]
+          (s/fn [r study-event-oid {new-forms :forms :as new-study-event} :- StudyEvent]
+            (if-let [{old-forms :forms} (get old study-event-oid)]
               (if-let [forms (diff-form-data old-forms new-forms)]
-                (assoc r k {:forms forms})
+                (assoc r study-event-oid {:forms forms})
                 r)
-              (assoc r k (assoc new-study-event :tx-type :insert))))
+              (assoc r study-event-oid (assoc new-study-event :tx-type :insert))))
           r new)))
 
 (s/defn diff-subject-data :- (s/maybe SubjectData)
   [old :- (s/maybe SubjectData) new :- (s/maybe SubjectData)]
   (as-> (remove-dangling old new) r
         (reduce-kv
-          (s/fn [r k {new-study-events :study-events :as new-subject} :- Subject]
-            (if-let [{old-study-events :study-events} (get old k)]
+          (s/fn [r subject-key {new-study-events :study-events :as new-subject} :- Subject]
+            (if-let [{old-study-events :study-events} (get old subject-key)]
               (if-let [study-events (diff-study-event-data old-study-events new-study-events)]
-                (assoc r k {:tx-type :update :study-events study-events})
+                (assoc r subject-key {:tx-type :update :study-events study-events})
                 r)
-              (assoc r k (assoc new-subject :tx-type :insert))))
+              (assoc r subject-key (assoc new-subject :tx-type :insert))))
           r new)))
 
 (s/defn diff-clinical-data :- (s/maybe ClinicalData)
   [old :- (s/maybe ClinicalData) new :- (s/maybe ClinicalData)]
   (reduce-kv
-    (s/fn [r k {new-subjects :subjects :as new-clinical-datum} :- ClinicalDatum]
-      (if-let [{old-subjects :subjects} (get old k)]
+    (s/fn [r study-oid {new-subjects :subjects :as new-clinical-datum} :- ClinicalDatum]
+      (if-let [{old-subjects :subjects} (get old study-oid)]
         (if-let [subjects (diff-subject-data old-subjects new-subjects)]
-          (assoc r k {:subjects subjects})
+          (assoc r study-oid {:subjects subjects})
           r)
-        (assoc r k new-clinical-datum)))
+        (assoc r study-oid new-clinical-datum)))
     nil new))
 
 (s/defn diff-snapshots :- TransactionalODMFile
