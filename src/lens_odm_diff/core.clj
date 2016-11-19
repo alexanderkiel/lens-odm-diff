@@ -30,7 +30,9 @@
               (assoc r k (assoc new-item :tx-type :insert))))
           r new)))
 
-(defn- remove-dangling [old new]
+(defn- remove-dangling
+  "Takes two maps old and new and returns a map with keys not in new."
+  [old new]
   (reduce-kv
     (fn [r k _]
       (if (get new k)
