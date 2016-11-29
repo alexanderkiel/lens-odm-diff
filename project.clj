@@ -4,7 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :dependencies [[org.clojars.akiel/lens-odm-parser "0.1"]
+  :dependencies [[org.clojars.akiel/lens-odm-parser "0.2"]
                  [org.clojure/clojure "1.8.0"]]
 
   :profiles {:dev
