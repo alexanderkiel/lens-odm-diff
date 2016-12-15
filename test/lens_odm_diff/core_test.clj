@@ -1,78 +1,74 @@
 (ns lens-odm-diff.core-test
-  (:require [clj-time.core :refer [now date-time]]
+  (:require [clojure.spec.test :as st]
             [clojure.test :refer :all]
-            [clojure.test.check.clojure-test :refer [defspec]]
-            [clojure.test.check.generators :as gen]
-            [clojure.test.check.properties :as prop]
-            [lens-odm-diff.core :refer :all]
-            [lens-odm-parser.core :refer [ItemData ItemGroupData FormData
-                                          StudyEventData SubjectData
-                                          ClinicalData SnapshotODMFile
-                                          TransactionalODMFile]]
-            [schema.core :as s]
-            [schema.experimental.generators :as g]
-            [schema.test :refer [validate-schemas]])
-  (:import [org.joda.time DateTime]))
+            [lens-odm-diff.core :as d :refer :all]
+            [lens-odm-diff.test-util]))
 
-(use-fixtures :once validate-schemas)
+(alias 'stc 'clojure.spec.test.check)
+
+(st/instrument)
 
 (deftest diff-item-data-test
-
   (testing "nil goes through"
     (is (nil? (diff-item-data nil nil))))
 
   (testing "equal values lead to no updates"
     (is (nil? (diff-item-data
-                {"I1" {:data-type :string :value "1"}}
-                {"I1" {:data-type :string :value "1"}}))))
+                {"I1" {:data-type :string :string-value "1"}}
+                {"I1" {:data-type :string :string-value "1"}})))
+    (is (nil? (diff-item-data
+                {"I1" {:data-type :float :float-value 1M}}
+                {"I1" {:data-type :float :float-value 1M}})))
+    (is (nil? (diff-item-data
+                {"I1" {:data-type :float :float-value 1.1M}}
+                {"I1" {:data-type :float :float-value 1.1M}}))))
 
   (testing "differing value is updated"
-    (is (= {"I1" {:data-type :string :value "1"}}
+    (is (= {"I1" {:data-type :string :string-value "1"}}
            (diff-item-data
-             {"I1" {:data-type :string :value "0"}}
-             {"I1" {:data-type :string :value "1"}})))))
+             {"I1" {:data-type :string :string-value "0"}}
+             {"I1" {:data-type :string :string-value "1"}})))
+    (is (= {"I1" {:data-type :float :float-value 1M}}
+           (diff-item-data
+             {"I1" {:data-type :float :float-value 0M}}
+             {"I1" {:data-type :float :float-value 1M}})))
+    (is (= {"I1" {:data-type :float :float-value 1.1M}}
+           (diff-item-data
+             {"I1" {:data-type :float :float-value 1M}}
+             {"I1" {:data-type :float :float-value 1.1M}}))))
 
-(def date-time-generator (gen/return (date-time 2016 3 18 14 41)))
-
-(defn generator [schema]
-  (g/generator schema {DateTime date-time-generator}))
-
-(defspec diff-item-data-check 100
-  (prop/for-all [old (generator ItemData)
-                 new (generator ItemData)]
-    (nil? (s/check (s/maybe ItemData) (diff-item-data old new)))))
+  (is (conform-var? `d/diff-item-data ::stc/opts {:num-tests 10})))
 
 (deftest diff-item-group-data-test
-
   (testing "nil goes through"
     (is (nil? (diff-item-group-data nil nil))))
 
   (testing "equal item data lead to no updates"
     (is (nil? (diff-item-group-data
-                {"IG1" {:items {"I1" {:data-type :string :value "1"}}}}
-                {"IG1" {:items {"I1" {:data-type :string :value "1"}}}})))))
+                {"IG1" {:items {"I1" {:data-type :string :string-value "1"}}}}
+                {"IG1" {:items {"I1" {:data-type :string :string-value "1"}}}}))))
+  (is (conform-var? `d/diff-item-group-data ::stc/opts {:num-tests 10})))
 
-(defspec diff-item-group-data-check 20
-  (prop/for-all [old (generator ItemGroupData)
-                 new (generator ItemGroupData)]
-    (nil? (s/check (s/maybe ItemGroupData) (diff-item-group-data old new)))))
+(deftest diff-form-data-test
+  (testing "nil goes through"
+    (is (nil? (diff-form-data nil nil))))
 
-(defspec diff-form-data-check 20
-  (prop/for-all [old (generator FormData)
-                 new (generator FormData)]
-    (nil? (s/check (s/maybe FormData) (diff-form-data old new)))))
+  (is (conform-var? `d/diff-form-data ::stc/opts {:num-tests 10})))
 
-(defspec diff-study-event-data-check 10
-  (prop/for-all [old (generator StudyEventData)
-                 new (generator StudyEventData)]
-    (nil? (s/check (s/maybe StudyEventData) (diff-study-event-data old new)))))
+(deftest diff-study-event-data-test
+  (testing "nil goes through"
+    (is (nil? (diff-study-event-data nil nil))))
 
-(defspec diff-subject-data-check 10
-  (prop/for-all [old (generator SubjectData)
-                 new (generator SubjectData)]
-    (nil? (s/check (s/maybe SubjectData) (diff-subject-data old new)))))
+  (is (conform-var? `d/diff-study-event-data ::stc/opts {:num-tests 7})))
 
-(defspec diff-clinical-data-check 10
-  (prop/for-all [old (generator ClinicalData)
-                 new (generator ClinicalData)]
-    (nil? (s/check (s/maybe ClinicalData) (diff-clinical-data old new)))))
+(deftest diff-subject-data-test
+  (testing "nil goes through"
+    (is (nil? (diff-subject-data nil nil))))
+
+  (is (conform-var? `d/diff-subject-data ::stc/opts {:num-tests 6})))
+
+(deftest diff-clinical-data-test
+  (testing "nil goes through"
+    (is (nil? (diff-clinical-data nil nil))))
+
+  (is (conform-var? `d/diff-clinical-data ::stc/opts {:num-tests 5})))
