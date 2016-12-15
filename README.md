@@ -21,7 +21,7 @@ This library uses transactional ODM files to express the differences between two
 To install, just add the following to your project dependencies:
 
 ```clojure
-[org.clojars.akiel/lens-odm-diff "0.1"]
+[org.clojars.akiel/lens-odm-diff "0.3-alpha14"]
 ```
 
 ## Usage
