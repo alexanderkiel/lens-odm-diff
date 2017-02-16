@@ -13,5 +13,6 @@
   :profiles {:dev
              {:source-paths ["dev"]
               :dependencies [[criterium "0.4.4"]
+                             [juxt/iota "0.2.3"]
                              [org.clojure/test.check "0.9.0"]]
               :global-vars {*print-length* 20}}})

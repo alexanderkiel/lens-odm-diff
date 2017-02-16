@@ -95,19 +95,33 @@
               (assoc r subject-key (assoc new-subject :tx-type :insert))))
           r new)))
 
+(defn- remove-dangling-clinical-data
+  "Like remove-dangling but goes down to subjects."
+  [old new]
+  (reduce-kv
+    (fn [r k {old-subjects :subjects}]
+      (if (get new k)
+        r
+        (if-let [subjects (remove-dangling old-subjects nil)]
+          (assoc r k {:subjects subjects})
+          r)))
+    nil old))
+
 (s/fdef diff-clinical-data
   :args (s/cat :old (s/nilable ::p/clinical-data) :new (s/nilable ::p/clinical-data))
   :ret (s/nilable ::p/clinical-data))
 
 (defn diff-clinical-data [old new]
-  (reduce-kv
-    (fn [r study-oid {new-subjects :subjects :as new-clinical-datum}]
-      (if-let [{old-subjects :subjects} (get old study-oid)]
-        (if-let [subjects (diff-subject-data old-subjects new-subjects)]
-          (assoc r study-oid {:subjects subjects})
-          r)
-        (assoc r study-oid new-clinical-datum)))
-    nil new))
+  (as-> (remove-dangling-clinical-data old new) r
+        (reduce-kv
+          (fn [r study-oid {new-subjects :subjects :as new-clinical-datum}]
+            (if new-subjects
+              (let [{old-subjects :subjects} (get old study-oid)]
+                (if-let [subjects (diff-subject-data old-subjects new-subjects)]
+                  (assoc r study-oid {:subjects subjects})
+                  r))
+              r))
+          r new)))
 
 (defn- assoc-when [m k v]
   (if v (assoc m k v) m))
